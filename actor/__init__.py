@@ -1,13 +1,20 @@
 from flask import Flask
+import app_logging
+
 app = Flask(__name__)
 
-# default configuration
 APP_NAME = "Actor"
-# SQLALCHEMY_ECHO = True
-# SQLALCHEMY_RECORD_QUERIE = True
+LOG_LEVEL = "error"
+LOG_DIR = "/var/log"
 
-# load configuration
+# load configurations
 app.config.from_object(__name__)
 app.config.from_envvar("ACTOR_SETTINGS")
+
+params = dict(
+    app_name=app.config["APP_NAME"],
+    log_level=app.config["LOG_LEVEL"],
+    log_dir=app.config["LOG_DIR"],)
+app.logger.addHandler(app_logging.log_file_handler(**params))
 
 from actor import views

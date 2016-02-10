@@ -1,7 +1,10 @@
 .DS_Store
 .pyenv/
 .idea/
-mirrors_log/
+.vagrant/
+logs_local/mirrors_log/
+logs_local/log/
+*_local.py
 
 # Byte-compiled / optimized / DLL files
 __pycache__/
