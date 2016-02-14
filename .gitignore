@@ -2,9 +2,9 @@
 .pyenv/
 .idea/
 .vagrant/
-logs_local/mirrors_log/
-logs_local/log/
-*_local.py
+logs_local/
+production/
+*_local.*
 
 # Byte-compiled / optimized / DLL files
 __pycache__/

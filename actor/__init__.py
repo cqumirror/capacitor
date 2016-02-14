@@ -4,6 +4,7 @@ import app_logging
 app = Flask(__name__)
 
 APP_NAME = "Actor"
+SERVER_NAME = "localhost:5000"
 LOG_LEVEL = "error"
 LOG_DIR = "/var/log"
 
