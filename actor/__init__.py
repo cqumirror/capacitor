@@ -7,6 +7,8 @@ APP_NAME = "Actor"
 SERVER_NAME = "localhost:5000"
 LOG_LEVEL = "error"
 LOG_DIR = "/var/log"
+JSON_SORT_KEYS = False
+JSONIFY_PRETTYPRINT_REGULAR = True
 
 # load configurations
 app.config.from_object(__name__)
