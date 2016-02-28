@@ -7,9 +7,6 @@ from actor import response
 from werkzeug.contrib.cache import SimpleCache
 cache = SimpleCache()
 
-TIME_FORMAT = "%Y-%m-%d %H:%M:%S"
-TIME_UNKNOWN = "????-??-?? ??:??:??"
-
 
 class Mirrors(MethodView):
 

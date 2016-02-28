@@ -7,6 +7,7 @@ APP_NAME = "Actor"
 SERVER_NAME = "localhost:5000"
 LOG_LEVEL = "error"
 LOG_DIR = "/var/log"
+TIME_FORMAT = "%Y-%m-%d %H:%M:%S"
 JSON_SORT_KEYS = False
 JSONIFY_PRETTYPRINT_REGULAR = True
 
