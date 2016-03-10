@@ -4,10 +4,14 @@ import logging
 
 
 def _mkdir_p(path):
+    ab_path = path
+    if not os.path.isabs(ab_path):
+        curr_dir = os.getcwd()
+        ab_path = os.path.join(curr_dir, path)
     try:
-        os.mkdir(path)
+        os.makedirs(ab_path)
     except OSError as exc:
-        if exc.errno == errno.EEXIST and os.path.isdir(path):
+        if exc.errno == errno.EEXIST and os.path.isdir(ab_path):
             pass
         else:
             raise
