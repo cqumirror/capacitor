@@ -8,7 +8,7 @@ from actor import app
 
 
 def main():
-    app.run(host="127.0.0.1", debug=True,)
+    app.run(host="localhost", debug=False,)
 
 
 if __name__ == '__main__':

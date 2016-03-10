@@ -185,4 +185,4 @@ def register_api(view, endpoint, url, pk="cname", pk_type="string"):
 
 
 register_api(Mirrors, "mirrors_api", "/api/mirrors", pk="cname")
-register_api(Notices, "Notices_api", "/api/notices", pk="id", pk_type="int")
+register_api(Notices, "notices_api", "/api/notices", pk="id", pk_type="int")
