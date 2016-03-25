@@ -1,4 +1,4 @@
-#!.pyenv/bin/python
+#!venv/bin/python
 
 import os
 curr_path = os.path.abspath(os.curdir)
@@ -8,7 +8,7 @@ from actor import app
 
 
 def main():
-    app.run(host="localhost", debug=False,)
+    app.run(host="localhost", debug=True,)
 
 
 if __name__ == '__main__':

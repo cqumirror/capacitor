@@ -1,6 +1,7 @@
 from flask import make_response, jsonify
 
 STATUS_CODE_DEFINITIONS = {
+    200: "OK",
     201: "Created",
     400: "Bad Request",
     401: "Unauthorized",
@@ -21,6 +22,10 @@ def make_resp(status_code, message=None, errors=None):
         rv["errors"] = errors
     resp = make_response(jsonify(rv), status_code)
     return resp
+
+
+def ok(message=None):
+    return make_resp(200, message=message)
 
 
 def created(message=None):

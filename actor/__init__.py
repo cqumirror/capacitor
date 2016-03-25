@@ -9,10 +9,8 @@ LOG_LEVEL = "error"
 LOG_DIR = "/var/log"
 TIME_FORMAT = "%Y-%m-%d %H:%M:%S"
 SERVER_NAME = "localhost:5000"
-
-if not app.debug:
-    JSON_SORT_KEYS = False
-    JSONIFY_PRETTYPRINT_REGULAR = False
+JSON_SORT_KEYS = False
+JSONIFY_PRETTYPRINT_REGULAR = True
 
 # load configurations
 app.config.from_object(__name__)

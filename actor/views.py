@@ -8,9 +8,24 @@ from werkzeug.contrib.cache import SimpleCache
 cache = SimpleCache()
 
 
-class Mirrors(MethodView):
+class ActorView(MethodView):
 
-    def _mirror(self, data):
+    def get_setting(self, name, default=None):
+        rv = app.config[name]
+        return rv if rv else default
+
+    def get_cache(self, k, default=None):
+        rv = cache.get(k)
+        return rv if rv else default
+
+    def set_cache(self, k, v):
+        return cache.set(k, v)
+
+
+class Mirrors(ActorView):
+
+    def _build_mirror(self, data):
+        # set some flags
         url = "{}://{}{}".format(data["protocol"], data["host"], data["path"])
         has_help = True if data["help_url"] else False
         is_muted = True if data["muted_at"] else False
@@ -26,38 +41,38 @@ class Mirrors(MethodView):
             is_muted=is_muted,
             sync_status=None,
             synced_at=None,
-            comment="",
+            comment=None,
             has_comment=False,
             size=None,)
 
-    def _check_get_params(self, raw_params):
+    def _check_cname(self, cname):
         errors = []
-        if raw_params:
-            raise NotImplementedError
+        if cname:
+            # TODO: cname consists of '[a-z]' and '-'.
+            pass
 
         return errors
 
     def get(self, cname):
         # return list of mirrors
-        errors = self._check_get_params(cname)
+        errors = self._check_cname(cname)
         if errors:
             return response.unprocessable_entity(errors=errors)
+
+        mirrors_cached = self.get_cache("mirrors")
+        if mirrors_cached is None:
+            return response.not_found("No cache for mirrors.")
+
         if cname is None:
             rv = dict(count=0, targets=[])
-            mirrors_cache = cache.get("mirrors")
-            if mirrors_cache is None:
-                return response.not_found("No cache for mirrors.")
-            rv["targets"] = mirrors_cache.values()
+            rv["targets"] = mirrors_cached.values()
             rv["count"] = len(rv["targets"])
             return jsonify(rv)
         else:
-            mirrors_data = cache.get("mirrors")
-            if mirrors_data is None:
-                return response.not_found("No cache for mirrors.")
-            if cname not in mirrors_data.keys():
+            if cname not in mirrors_cached.keys():
                 return response.not_found("No such resource.")
 
-            return jsonify(mirrors_data[cname])
+            return jsonify(mirrors_cached[cname])
 
     def _check_post_params(self, raw_json_data):
         errors = []
@@ -79,40 +94,48 @@ class Mirrors(MethodView):
         return errors
 
     def post(self):
-        _mirrors = request.get_json(silent=True)
-        if not _mirrors:
+        json_data = request.get_json(silent=True)
+        if not json_data:
             return response.bad_request("Problems parsing JSON.")
-        errors = self._check_post_params(_mirrors)
+        errors = self._check_post_params(json_data)
         if errors:
             return response.unprocessable_entity(errors=errors)
-        mirrors_cache = cache.get("mirrors")
-        if not mirrors_cache:
-            mirrors_cache = {}
-        for mirror in _mirrors:
-            cname = mirror["cname"]
-            if cname in mirrors_cache.keys():
+
+        mirrors_cached = self.get_cache("mirrors")
+        if not mirrors_cached:
+            mirrors_cached = {}
+
+        mirrors_created = mirrors_cached.copy()
+        for mirror_meta in json_data:
+            cname = mirror_meta["cname"]
+            # Just pass existed items and don't update it here!
+            if cname in mirrors_cached.keys():
                 continue
-            mirrors_cache[cname] = self._mirror(mirror)
-        if mirrors_cache:
-            cache.set("mirrors", mirrors_cache)
-        return response.created()
+            mirrors_created[cname] = self._build_mirror(mirror_meta)
+        if mirrors_created:
+            self.set_cache("mirrors", mirrors_created)
+            return response.created()
+        else:
+            return response.ok("Nothing changed.")
 
     def put(self, cname):
-        params = request.get_json(silent=True)
-        if params is None:
+        json_data = request.get_json(silent=True)
+        if json_data is None:
             return response.bad_request("Problems parsing JSON.")
-        mirrors_cache = cache.get("mirrors")
-        if mirrors_cache is None:
+
+        mirrors_cached = self.get_cache("mirrors")
+        if mirrors_cached is None:
             return response.bad_request("No cache for mirrors.")
+
         return response.not_implemented("API hasn't implemented.")
 
     def delete(self, cname):
         return response.not_implemented("API hasn't implemented.")
 
 
-class Notices(MethodView):
+class Notices(ActorView):
 
-    def _notice(self, data):
+    def _build_notice(self, data):
         is_muted = True if data["muted_at"] else False
         return dict(
             id=data["id"],
@@ -121,52 +144,62 @@ class Notices(MethodView):
             is_muted=is_muted,
             github_issue_url=data["github_issue_url"],)
 
-    def _check_get_params(self, raw_params):
+    def _check_notice_id(self, notice_id):
         errors = []
-        if raw_params:
-            raise NotImplementedError
+        if notice_id:
+            error = dict(
+                field="notice_id",
+                code="api_not_implemented",)
+            errors.append(error)
 
         return errors
 
-    def get(self, id):
-        errors = self._check_get_params(None)
+    def get(self, notice_id):
+        errors = self._check_notice_id(notice_id)
         if errors:
             return response.unprocessable_entity(errors=errors)
-        rv = dict(count=0, targets=[])
-        notices_cache = cache.get("notices")
-        if notices_cache is None:
+
+        notices_cached = self.get_cache("notices")
+        if notices_cached is None:
             return response.not_found("No cache for notices.")
-        notices_actived = [n for n in notices_cache.values() if not n["is_muted"]]
-        rv["targets"] = notices_actived
+
+        rv = dict(count=0, targets=[])
+        notices_activated = [n for n in notices_cached.values() if not n["is_muted"]]
+        rv["targets"] = notices_activated
         rv["count"] = len(rv["targets"])
         return jsonify(rv)
 
     def _check_post_params(self, raw_json_data):
         errors = []
         if raw_json_data:
-            # check id, time format,
+            # TODO: please check id and time format.
             pass
 
         return errors
 
     def post(self):
-        _notices = request.get_json(silent=True)
-        if not _notices:
+        json_data = request.get_json(silent=True)
+        if not json_data:
             return response.bad_request("Problems parsing JSON.")
-        errors = self._check_post_params(_notices)
+        errors = self._check_post_params(json_data)
         if errors:
             return response.unprocessable_entity(errors=errors)
-        notices_cache = cache.get("notices")
-        if not notices_cache:
-            notices_cache = {}
-        for notice in _notices:
-            id_str = str(notice["id"])
-            if id_str in notices_cache.keys():
+
+        notices_cached = self.get_cache("notices")
+        if not notices_cached:
+            notices_cached = {}
+
+        notices_created = notices_cached
+        for notice_meta in json_data:
+            id_str = str(notice_meta["id"])
+            if id_str in notices_cached.keys():
                 continue
-            notices_cache[id_str] = self._notice(notice)
-        if notices_cache:
-            cache.set("notices", notices_cache)
-        return response.created()
+            notices_created[id_str] = self._build_notice(notice_meta)
+        if notices_created:
+            cache.set("notices", notices_created)
+            return response.created()
+        else:
+            return response.ok("Nothing changed.")
 
     def put(self):
         return response.not_implemented("API hasn't implemented.")
@@ -177,12 +210,14 @@ class Notices(MethodView):
 
 def register_api(view, endpoint, url, pk="cname", pk_type="string"):
     view_func = view.as_view(endpoint)
+    # e.g. GET /api/mirrors
     app.add_url_rule(url, defaults={pk: None},
                      view_func=view_func, methods=['GET'])
     app.add_url_rule(url, view_func=view_func, methods=['POST'])
+    # e.g. GET /api/mirrors/<cname:string>
     app.add_url_rule("{}/<{}:{}>".format(url, pk_type, pk),
                      view_func=view_func, methods=['GET', 'PUT', 'DELETE'])
 
 
 register_api(Mirrors, "mirrors_api", "/api/mirrors", pk="cname")
-register_api(Notices, "notices_api", "/api/notices", pk="id", pk_type="int")
+register_api(Notices, "notices_api", "/api/notices", pk="notice_id", pk_type="int")
