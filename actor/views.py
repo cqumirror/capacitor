@@ -19,7 +19,15 @@ cache = {
 
 class ActorView(MethodView):
 
-    def get_current_user(self):
+    @property
+    def _secret_key(self):
+        secret = self.get_setting("secret_key")
+        if not secret:
+            raise Exception("'secret_key' needed")
+        return self.get_setting("secret_key")
+
+    @property
+    def _current_access_token(self):
         access_token = None
         if "access_token" in request.cookies:
             access_token = request.cookies["access_token"]
@@ -27,9 +35,16 @@ class ActorView(MethodView):
             access_token = request.headers["Access-Token"]
         else:
             pass
-        # TODO: decode access_token -> user_id
+        return access_token
 
-        return None
+    def get_current_user(self):
+        curr_access_token = self._current_access_token
+        if not curr_access_token:
+            return None
+        # expiration: 365 days
+        args = (self._secret_key, "access_token",
+                curr_access_token, 365)
+        return security.decode_signed_value(*args)
 
     @property
     def current_user(self):
@@ -38,8 +53,10 @@ class ActorView(MethodView):
         return g.current_user
 
     def get_setting(self, name, default=None):
-        rv = app.config[name]
-        return rv if rv else default
+        rv = default
+        if name.upper() in app.config:
+            rv = app.config[name.upper()]
+        return rv
 
     def get_cache(self, k, default=None):
         rv = cache.get(k)
