@@ -11,7 +11,8 @@ from actor import security
 
 class ActorView(MethodView):
 
-    pool = redis.ConnectionPool(host='192.168.113.254', port=6379, db=0)
+    pool = redis.ConnectionPool(host=app.config["REDIS_HOST"],
+                                port=6379, db=0)
 
     @property
     def _secret_key(self):
