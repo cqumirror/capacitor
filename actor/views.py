@@ -1,23 +1,17 @@
 # -*- coding: utf-8 -*-
 from flask import jsonify, request, g
 from flask.views import MethodView
+import redis
+import json
 
 from actor import app
 from actor import response
 from actor import security
 
-from werkzeug.contrib.cache import SimpleCache
-cache = SimpleCache()
-"""
-cache = {
-    "mirrors": {},
-    "notices": {},
-    "users": {}
-}
-"""
-
 
 class ActorView(MethodView):
+
+    pool = redis.ConnectionPool(host='192.168.113.254', port=6379, db=0)
 
     @property
     def _secret_key(self):
@@ -58,12 +52,27 @@ class ActorView(MethodView):
             rv = app.config[name.upper()]
         return rv
 
+    @property
+    def cache(self):
+        """
+        cache = {
+            "mirrors": {},
+            "notices": {},
+            "users": {}
+        }
+        """
+        if hasattr(g, "cache"):
+            return g.cache
+        g.cache = redis.StrictRedis(connection_pool=self.pool)
+        return g.cache
+
     def get_cache(self, k, default=None):
-        rv = cache.get(k)
+        rv = json.loads(self.cache.get(k))
         return rv if rv else default
 
     def set_cache(self, k, v):
-        return cache.set(k, v)
+        value = json.dumps(v)
+        return self.cache.set(k, value)
 
 
 class Mirrors(ActorView):
@@ -244,7 +253,7 @@ class Notices(ActorView):
                 continue
             notices_created[id_str] = self._build_notice(notice_meta)
         if notices_created:
-            cache.set("notices", notices_created)
+            self.set_cache("notices", notices_created)
             return response.created()
         else:
             return response.ok("Nothing changed.")
