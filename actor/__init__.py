@@ -1,4 +1,5 @@
 from flask import Flask
+import os
 import app_logging
 
 app = Flask(__name__)
@@ -11,6 +12,7 @@ TIME_FORMAT = "%Y-%m-%d %H:%M:%S"
 SERVER_NAME = "localhost:5000"
 JSON_SORT_KEYS = False
 JSONIFY_PRETTYPRINT_REGULAR = True
+SECRET_KEY = os.urandom(24)
 
 # load configurations
 app.config.from_object(__name__)

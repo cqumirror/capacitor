@@ -1,14 +1,41 @@
 # -*- coding: utf-8 -*-
-from flask import jsonify, request
+from flask import jsonify, request, g
 from flask.views import MethodView
 
 from actor import app
 from actor import response
+from actor import security
+
 from werkzeug.contrib.cache import SimpleCache
 cache = SimpleCache()
+"""
+cache = {
+    "mirrors": {},
+    "notices": {},
+    "users": {}
+}
+"""
 
 
 class ActorView(MethodView):
+
+    def get_current_user(self):
+        access_token = None
+        if "access_token" in request.cookies:
+            access_token = request.cookies["access_token"]
+        elif "Access-Token" in request.headers:
+            access_token = request.headers["Access-Token"]
+        else:
+            pass
+        # TODO: decode access_token -> user_id
+
+        return None
+
+    @property
+    def current_user(self):
+        if not hasattr(g, 'current_user'):
+            g.current_user = self.get_current_user()
+        return g.current_user
 
     def get_setting(self, name, default=None):
         rv = app.config[name]
@@ -93,6 +120,7 @@ class Mirrors(ActorView):
 
         return errors
 
+    @security.authenticated
     def post(self):
         json_data = request.get_json(silent=True)
         if not json_data:
@@ -106,7 +134,7 @@ class Mirrors(ActorView):
             mirrors_cached = {}
 
         mirrors_created = mirrors_cached.copy()
-        for mirror_meta in json_data:
+        for mirror_meta in json_data["targets"]:
             cname = mirror_meta["cname"]
             # Just pass existed items and don't update it here!
             if cname in mirrors_cached.keys():
@@ -118,6 +146,7 @@ class Mirrors(ActorView):
         else:
             return response.ok("Nothing changed.")
 
+    @security.authenticated
     def put(self, cname):
         json_data = request.get_json(silent=True)
         if json_data is None:
@@ -129,6 +158,7 @@ class Mirrors(ActorView):
 
         return response.not_implemented("API hasn't implemented.")
 
+    @security.authenticated
     def delete(self, cname):
         return response.not_implemented("API hasn't implemented.")
 
@@ -177,6 +207,7 @@ class Notices(ActorView):
 
         return errors
 
+    @security.authenticated
     def post(self):
         json_data = request.get_json(silent=True)
         if not json_data:
@@ -190,7 +221,7 @@ class Notices(ActorView):
             notices_cached = {}
 
         notices_created = notices_cached
-        for notice_meta in json_data:
+        for notice_meta in json_data["targets"]:
             id_str = str(notice_meta["id"])
             if id_str in notices_cached.keys():
                 continue
@@ -201,20 +232,22 @@ class Notices(ActorView):
         else:
             return response.ok("Nothing changed.")
 
+    @security.authenticated
     def put(self):
         return response.not_implemented("API hasn't implemented.")
 
+    @security.authenticated
     def delete(self):
         return response.not_implemented("API hasn't implemented.")
 
 
 def register_api(view, endpoint, url, pk="cname", pk_type="string"):
     view_func = view.as_view(endpoint)
-    # e.g. GET /api/mirrors
+    # e.g. GET,POST /api/mirrors
     app.add_url_rule(url, defaults={pk: None},
                      view_func=view_func, methods=['GET'])
     app.add_url_rule(url, view_func=view_func, methods=['POST'])
-    # e.g. GET /api/mirrors/<cname:string>
+    # e.g. GET,PUT,DELETE /api/mirrors/<cname:string>
     app.add_url_rule("{}/<{}:{}>".format(url, pk_type, pk),
                      view_func=view_func, methods=['GET', 'PUT', 'DELETE'])
 
