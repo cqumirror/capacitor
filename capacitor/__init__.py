@@ -25,4 +25,4 @@ params = dict(
     log_dir=app.config["LOG_DIR"],)
 app.logger.addHandler(app_logging.log_file_handler(**params))
 
-from actor import views
+from capacitor import views

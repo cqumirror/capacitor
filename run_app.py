@@ -2,10 +2,10 @@
 
 import os
 curr_path = os.path.abspath(os.curdir)
-os.environ["ACTOR_SETTINGS"] = \
+os.environ["CAPACITOR_SETTINGS"] = \
     os.path.join(curr_path, "settings_local.cfg")
 
-from actor import app
+from capacitor import app
 
 
 def main():

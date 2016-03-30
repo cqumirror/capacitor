@@ -1,9 +1,10 @@
-API
-===
+# APIs
 
 ##Schema
-1. 数据返回格式统一使用 `json`
-2. HTTP Method: `GET`
+1. 数据格式统一使用 `json`
+2. HTTP Methods:
+    - `GET`: no access control
+    - `POST`, `PUT` and `DELETE`: access_token needed
 3. 时间格式: yyyy-MM-dd HH:mm:ss
 4. 返回值为单个对象:
 
@@ -23,19 +24,22 @@ API
 |targets|对象列表||
 
 
+
 ##获取镜像列表
+
 ```
 GET    /api/mirrors
 ```
 
-返回列表中对象:
+返回列表中的对象:
+
 ```
 {
-      "comment": "",
-      "has_comment": false,
-      "has_help": true,
-      "muted_at": null,
       "is_muted": false,
+      "has_comment": false,
+      "has_help": true,         // boolean ended
+      "comment": "",
+      "muted_at": null,
       "sync_status": null,
       "created_at": null,
       "help_url": "https://mirrors.cqu.edu.cn/wiki/index.php?title=CentOS",
@@ -52,10 +56,10 @@ GET    /api/mirrors
 
 |参数|意义|备注|
 |----|----|----|
-|cname|权威名称 全局 ID|应仅包含 [a-z] 和 -|
+|cname|权威名称(全局ID)|应仅包含[a-z]和-|
 |full_name|显示名字|参见镜像官方|
-|url|镜像链接|现需完整 url|
-|help_url|镜像使用帮助链接|现链接到相应 wiki 页|
+|url|镜像链接||
+|help_url|镜像使用帮助链接|现链接到相应wiki页|
 |comment|镜像备注||
 |synced_at|最后同步时间||
 |size|镜像大小||
@@ -77,6 +81,7 @@ GET    /api/mirrors
 
 
 ##获取镜像站公告
+
 ```
 GET    /api/notices
 ```
@@ -85,9 +90,9 @@ GET    /api/notices
 ```
 {
     "is_muted": false,
+    "id": 1,
     "created_at": "2015-1-1 11:11:11",
     "muted_at": null,
-    "id": 1,
     "github_issue_url": null
 }
 ```

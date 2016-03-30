@@ -5,7 +5,7 @@ import hashlib
 import logging
 
 from flask import request, jsonify
-from actor import response
+from capacitor import response
 
 
 def do_authentication(self):

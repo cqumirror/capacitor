@@ -4,9 +4,9 @@ from flask.views import MethodView
 import redis
 import json
 
-from actor import app
-from actor import response
-from actor import security
+from capacitor import app
+from capacitor import response
+from capacitor import security
 
 
 class ActorView(MethodView):
