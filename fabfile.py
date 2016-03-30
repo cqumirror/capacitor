@@ -9,8 +9,8 @@ srv_root = "/srv"
 git_root = "~/source-git"
 
 app_name = "capacitor"
-app_src = os.path.join([git_root, app_name])
-app_dst = os.path.join([srv_root, app_name])
+app_src = os.path.join(git_root, app_name)
+app_dst = os.path.join(srv_root, app_name)
 
 gunicorn_log_path = "/var/log/gunicorn"
 gunicorn_pid_file = "gunicorn.pid"          # defined in gunicorn.py
@@ -18,7 +18,7 @@ gunicorn_pid_file = "gunicorn.pid"          # defined in gunicorn.py
 
 def update_web_pages():
     """Update web pages, temp use only."""
-    web_pages_src = os.path.join([git_root, "index-of-mirrors"])
+    web_pages_src = os.path.join(git_root, "index-of-mirrors")
     web_pages_dst = "/www/mirrors/static"
     with cd(web_pages_src):
         run("git pull")
@@ -33,7 +33,7 @@ def git_pull():
 
 
 def prepare_env():
-    requirements_txt = os.path.join([app_src, "requirements.txt"])
+    requirements_txt = os.path.join(app_src, "requirements.txt")
     app_venv_name = "venv"
 
     run("mkdir -p {}".format(app_dst))
@@ -59,8 +59,8 @@ def deploy():
     put_config_files()
     # update app lib
     app_lib_name = app_name
-    app_lib_old = os.path.join([app_dst, app_lib_name])
-    app_lib_new = os.path.join([app_src, app_lib_name])
+    app_lib_old = os.path.join(app_dst, app_lib_name)
+    app_lib_new = os.path.join(app_src, app_lib_name)
     # remove old app lib
     run("rm -rf {}".format(app_lib_old))
     # copy new app lib to app dst
@@ -73,7 +73,7 @@ def start():
         if exists(gunicorn_pid_file):
             run("kill -TERM $(<{})".format(gunicorn_pid_file))
         # start new gunicorn processes
-        app_settings_cfg = os.path.join([app_dst, "settings.cfg"])
+        app_settings_cfg = os.path.join(app_dst, "settings.cfg")
         cmd_export_settings = "export {}_SETTINGS={}".format(
             app_name.upper(),
             app_settings_cfg)
