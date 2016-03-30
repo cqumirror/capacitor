@@ -9,7 +9,7 @@ APIs for cached data of mirror back-end.
  - `app_logging.py`: Logging utilities.
  - `views.py`: Routers and its implementation.
  - `response.py`:
- - `securiy.py`: Access control utilities.
+ - `security.py`: Access control utilities.
 - `run_app.py`: For debugging. Just `./run_app.py` in the CLI.
 
 ##Quick Start for Dev.
