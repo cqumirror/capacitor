@@ -1,5 +1,5 @@
-# Capacitor
-APIs for cached data of mirror back-end.
+# capacitor
+To cache data from mirror back-end and provide APIs to access them.
 
 ##Features
 - [x] Provide RESTful APIs for front-end to get resources.

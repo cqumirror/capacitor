@@ -9,17 +9,17 @@ from capacitor import response
 from capacitor import security
 
 
-class ActorView(MethodView):
+class CapacitorView(MethodView):
 
     pool = redis.ConnectionPool(host=app.config["REDIS_HOST"],
                                 port=6379, db=0)
 
     @property
     def _secret_key(self):
-        secret = self.get_setting("secret_key")
+        secret = self.settings_get("secret_key")
         if not secret:
             raise Exception("'secret_key' needed")
-        return self.get_setting("secret_key")
+        return self.settings_get("secret_key")
 
     @property
     def _current_access_token(self):
@@ -33,24 +33,24 @@ class ActorView(MethodView):
         return access_token
 
     def get_current_user(self):
-        curr_access_token = self._current_access_token
-        if not curr_access_token:
+        current_access_token = self._current_access_token
+        if not current_access_token:
             return None
         # expiration: 365 days
         args = (self._secret_key, "access_token",
-                curr_access_token, 365)
+                current_access_token, 365)
         return security.decode_signed_value(*args)
 
     @property
     def current_user(self):
+        # TODO: check g's lifetime
         if not hasattr(g, 'current_user'):
             g.current_user = self.get_current_user()
         return g.current_user
 
-    def get_setting(self, name, default=None):
-        rv = default
-        if name.upper() in app.config:
-            rv = app.config[name.upper()]
+    def settings_get(self, name, default=None):
+        name_upper = name.upper()
+        rv = app.config[name_upper] if name_upper in app.config else default
         return rv
 
     @property
@@ -67,16 +67,16 @@ class ActorView(MethodView):
         g.cache = redis.StrictRedis(connection_pool=self.pool)
         return g.cache
 
-    def get_cache(self, k, default=None):
+    def cache_get(self, k, default=None):
         rv = json.loads(self.cache.get(k))
         return rv if rv else default
 
-    def set_cache(self, k, v):
+    def cache_set(self, k, v):
         value = json.dumps(v)
         return self.cache.set(k, value)
 
 
-class Mirrors(ActorView):
+class Mirrors(CapacitorView):
 
     def _build_mirror(self, data):
         # set some flags
@@ -113,7 +113,7 @@ class Mirrors(ActorView):
         if errors:
             return response.unprocessable_entity(errors=errors)
 
-        mirrors_cached = self.get_cache("mirrors")
+        mirrors_cached = self.cache_get("mirrors")
         if mirrors_cached is None:
             return response.not_found("No cache for mirrors.")
 
@@ -156,7 +156,7 @@ class Mirrors(ActorView):
         if errors:
             return response.unprocessable_entity(errors=errors)
 
-        mirrors_cached = self.get_cache("mirrors")
+        mirrors_cached = self.cache_get("mirrors")
         if not mirrors_cached:
             mirrors_cached = {}
 
@@ -168,7 +168,7 @@ class Mirrors(ActorView):
                 continue
             mirrors_created[cname] = self._build_mirror(mirror_meta)
         if mirrors_created:
-            self.set_cache("mirrors", mirrors_created)
+            self.cache_set("mirrors", mirrors_created)
             return response.created()
         else:
             return response.ok("Nothing changed.")
@@ -179,7 +179,7 @@ class Mirrors(ActorView):
         if json_data is None:
             return response.bad_request("Problems parsing JSON.")
 
-        mirrors_cached = self.get_cache("mirrors")
+        mirrors_cached = self.cache_get("mirrors")
         if mirrors_cached is None:
             return response.bad_request("No cache for mirrors.")
 
@@ -190,7 +190,7 @@ class Mirrors(ActorView):
         return response.not_implemented("API hasn't implemented.")
 
 
-class Notices(ActorView):
+class Notices(CapacitorView):
 
     def _build_notice(self, data):
         is_muted = True if data["muted_at"] else False
@@ -216,7 +216,7 @@ class Notices(ActorView):
         if errors:
             return response.unprocessable_entity(errors=errors)
 
-        notices_cached = self.get_cache("notices")
+        notices_cached = self.cache_get("notices")
         if notices_cached is None:
             return response.not_found("No cache for notices.")
 
@@ -243,7 +243,7 @@ class Notices(ActorView):
         if errors:
             return response.unprocessable_entity(errors=errors)
 
-        notices_cached = self.get_cache("notices")
+        notices_cached = self.cache_get("notices")
         if not notices_cached:
             notices_cached = {}
 
@@ -254,7 +254,7 @@ class Notices(ActorView):
                 continue
             notices_created[id_str] = self._build_notice(notice_meta)
         if notices_created:
-            self.set_cache("notices", notices_created)
+            self.cache_set("notices", notices_created)
             return response.created()
         else:
             return response.ok("Nothing changed.")

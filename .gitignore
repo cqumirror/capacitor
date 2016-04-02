@@ -2,7 +2,9 @@
 venv/
 .idea/
 .vagrant/
+Vagrantfile
 logs_local/
+data_local/
 confs_production/
 *_local.*
 
