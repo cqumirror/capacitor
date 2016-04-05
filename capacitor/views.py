@@ -81,14 +81,14 @@ class Mirrors(CapacitorView):
     def _build_mirror(self, data):
         # set some flags
         url = "{}://{}{}".format(data["protocol"], data["host"], data["path"])
-        has_help = True if data["help_url"] else False
+        has_help_url = True if data["help_url"] else False
         is_muted = True if data["muted_at"] else False
         return dict(
             cname=data["cname"],
             url=url,
             full_name=data["full_name"],
             help_url=data["help_url"],
-            has_help=has_help,
+            has_help_url=has_help_url,
             created_at=data["created_at"],
             upstream_url=data["upstream_url"],
             muted_at=data["muted_at"],
@@ -119,7 +119,8 @@ class Mirrors(CapacitorView):
 
         if cname is None:
             rv = dict(count=0, targets=[])
-            rv["targets"] = mirrors_cached.values()
+            targets = mirrors_cached.values()
+            rv["targets"] = sorted(targets, key=lambda d: d["cname"])
             rv["count"] = len(rv["targets"])
             return jsonify(rv)
         else:
