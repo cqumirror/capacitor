@@ -1,16 +1,13 @@
 # capacitor
-To cache data from mirror back-end and provide APIs to access them.
-
-##Features
-- [x] Provide RESTful APIs for front-end to get resources.
+To provide cache service with RESTful API.
 
 ##Layout
-- `capacitor/`: Flask APP sits here. **Capacitor** is the APP's name.
- - `app_logging.py`: Logging utilities.
- - `views.py`: Routers and its implementation.
+- `capacitor/`: flask APP sits here. **capacitor** is the APP's name.
+ - `app_logging.py`: logging utilities.
+ - `views.py`: routers and its implementation.
  - `response.py`:
- - `security.py`: Access control utilities.
-- `run_app.py`: For debugging. Just `./run_app.py` in the CLI.
+ - `security.py`: access control utilities.
+- `run_app.py`: for debugging. Just `./run_app.py` in the CLI.
 
 ##Quick Start for Dev.
 - Change into the project directory. Everything happens here.

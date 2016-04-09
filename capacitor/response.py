@@ -12,46 +12,59 @@ STATUS_CODE_DEFINITIONS = {
 }
 
 
-def make_resp(status_code, message=None, errors=None):
+def _make_response_with_message(status_code, message=None, errors=None):
     code_def = STATUS_CODE_DEFINITIONS[status_code]
-    status = "{} {}".format(status_code, code_def)
+    status = "{}".format(code_def)
     rv = dict(status=status)
     if message:
         rv["message"] = message
     if errors:
         rv["errors"] = errors
-    resp = make_response(jsonify(rv), status_code)
-    return resp
+    return make_response(jsonify(rv), status_code)
 
 
 def ok(message=None):
-    return make_resp(200, message=message)
+    return _make_response_with_message(200, message=message)
 
 
 def created(message=None):
-    return make_resp(201, message=message)
+    return _make_response_with_message(201, message=message)
 
 
 def bad_request(message=None, errors=None):
-    return make_resp(400, message=message, errors=errors)
+    return _make_response_with_message(400, message=message, errors=errors)
 
 
 def unauthorized(message=None, errors=None):
-    return make_resp(401, message=message, errors=errors)
+    return _make_response_with_message(401, message=message, errors=errors)
 
 
 def forbidden(message=None, errors=None):
-    return make_resp(403, message=message, errors=errors)
+    return _make_response_with_message(403, message=message, errors=errors)
 
 
 def not_found(message=None, errors=None):
-    return make_resp(404, message=message, errors=errors)
+    return _make_response_with_message(404, message=message, errors=errors)
 
 
 def unprocessable_entity(message=None, errors=None):
-    return make_resp(422, message=message, errors=errors)
+    return _make_response_with_message(422, message=message, errors=errors)
 
 
 def not_implemented(message=None, errors=None):
-    return make_resp(501, message=message, errors=errors)
+    return _make_response_with_message(501, message=message, errors=errors)
 
+
+def with_message(status_code, message=None, errors=None):
+    return _make_response_with_message(status_code, message, errors)
+
+
+def with_target(target):
+    return make_response(jsonify(target), 200)
+
+
+def with_targets(targets):
+    """Wrapper JSON array in JSON object."""
+    rv = dict(count=0, targets=targets)
+    rv["count"] = len(rv["targets"])
+    return make_response(jsonify(rv), 200)

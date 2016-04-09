@@ -1,28 +1,30 @@
 # APIs
 
-##Schema
-1. 数据格式统一使用 `json`
-2. HTTP Methods:
-    - `GET`: no access control
-    - `POST`, `PUT` and `DELETE`: access_token needed
-3. 时间格式: yyyy-MM-dd HH:mm:ss
-4. 返回值为单个对象:
+## Schema
+1. 数据格式统一使用JSON
+2. HTTP methods:
+    - `GET` to get resources without access_token
+    - `POST` to create resources with access_token
+    - `PUT` to update specified resources with access_token
+    - `DELETE` to delete specified resources with access_token
+3. 时间格式为ISO 8601(YYYY-MM-DDTHH:MM:SSz): e.g. 2008-01-14T04:33:35Z
+4. status code作为返回值(给程序用的),并附上返回信息(给人看的)
 
-
+```json
+{
+    "status": "Bad Request",
+    "message": "Problems parsing JSON"
+}
 ```
+
+5. JSON数组会封装在一个JSON对象里
+
+```json
 {
     "count": 10,
     "targets": []
 }
 ```
-
-参数说明:
-
-|参数|意义|备注|
-|----|----|----|
-|count|对象个数||
-|targets|对象列表||
-
 
 
 ##获取镜像列表
@@ -31,7 +33,7 @@
 GET    /api/mirrors
 ```
 
-返回列表中的对象:
+列表中的对象:
 
 ```
 {

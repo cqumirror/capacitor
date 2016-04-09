@@ -81,14 +81,14 @@ class Mirrors(CapacitorView):
     def _build_mirror(self, data):
         # set some flags
         url = "{}://{}{}".format(data["protocol"], data["host"], data["path"])
-        has_help_url = True if data["help_url"] else False
+        has_help = True if data["help_url"] else False
         is_muted = True if data["muted_at"] else False
         return dict(
             cname=data["cname"],
             url=url,
             full_name=data["full_name"],
             help_url=data["help_url"],
-            has_help_url=has_help_url,
+            has_help=has_help,
             created_at=data["created_at"],
             upstream_url=data["upstream_url"],
             muted_at=data["muted_at"],
@@ -118,16 +118,14 @@ class Mirrors(CapacitorView):
             return response.not_found("No cache for mirrors.")
 
         if cname is None:
-            rv = dict(count=0, targets=[])
             targets = mirrors_cached.values()
-            rv["targets"] = sorted(targets, key=lambda d: d["cname"])
-            rv["count"] = len(rv["targets"])
-            return jsonify(rv)
+            targets_sorted = sorted(targets, key=lambda d: d["cname"])
+            return response.with_targets(targets_sorted)
         else:
             if cname not in mirrors_cached.keys():
                 return response.not_found("No such resource.")
 
-            return jsonify(mirrors_cached[cname])
+            return response.with_target(mirrors_cached[cname])
 
     def _check_post_params(self, raw_json_data):
         errors = []
@@ -221,11 +219,8 @@ class Notices(CapacitorView):
         if notices_cached is None:
             return response.not_found("No cache for notices.")
 
-        rv = dict(count=0, targets=[])
         notices_activated = [n for n in notices_cached.values() if not n["is_muted"]]
-        rv["targets"] = notices_activated
-        rv["count"] = len(rv["targets"])
-        return jsonify(rv)
+        return response.with_targets(notices_activated)
 
     def _check_post_params(self, raw_json_data):
         errors = []
