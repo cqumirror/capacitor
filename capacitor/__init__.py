@@ -1,5 +1,4 @@
 from flask import Flask
-import os
 import app_logging
 
 app = Flask(__name__)
@@ -12,7 +11,7 @@ TIME_FORMAT = "%Y-%m-%dT%H:%M:%SZ"  # ISO 8601
 SERVER_NAME = "localhost:5000"
 JSON_SORT_KEYS = False
 JSONIFY_PRETTYPRINT_REGULAR = True
-SECRET_KEY = os.urandom(24)
+SECRET_KEY = "null"
 REDIS_HOST = "192.168.113.254"
 
 # load configurations

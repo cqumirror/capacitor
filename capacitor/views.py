@@ -1,5 +1,5 @@
 # -*- coding: utf-8 -*-
-from flask import jsonify, request, g
+from flask import request, g
 from flask.views import MethodView
 import redis
 import json
@@ -24,9 +24,7 @@ class CapacitorView(MethodView):
     @property
     def _current_access_token(self):
         access_token = None
-        if "access_token" in request.cookies:
-            access_token = request.cookies["access_token"]
-        elif "Access-Token" in request.headers:
+        if "Access-Token" in request.headers:
             access_token = request.headers["Access-Token"]
         else:
             pass
@@ -39,11 +37,15 @@ class CapacitorView(MethodView):
         # expiration: 365 days
         args = (self._secret_key, "access_token",
                 current_access_token, 365)
-        return security.decode_signed_value(*args)
+        current_user = security.decode_signed_value(*args)
+        users_cached = self.cache_get("users")
+        if current_user not in users_cached.keys():
+            return None
+        else:
+            return current_user
 
     @property
     def current_user(self):
-        # TODO: check g's lifetime
         if not hasattr(g, 'current_user'):
             g.current_user = self.get_current_user()
         return g.current_user
@@ -131,22 +133,9 @@ class Mirrors(CapacitorView):
         errors = []
         if raw_json_data:
             pass
-            '''
-            fields = ["cname", "full_name", "protocol", "host", "path",
-                      "help", "created_at", "upstream_url", ]
-            fields_missing = [key for key in fields
-                              if key not in raw_json_data.keys()]
-            if fields_missing:
-                error = dict(
-                    resource="mirrors/{}".format(raw_json_data["cname"]),
-                    fields=fields_missing,
-                    code="missing_field",)
-                errors.append(error)
-            '''
 
         return errors
 
-    @security.authenticated
     def post(self):
         json_data = request.get_json(silent=True)
         if not json_data:

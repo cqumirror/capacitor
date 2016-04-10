@@ -4,29 +4,7 @@ import hmac
 import hashlib
 import logging
 
-from flask import request, jsonify
 from capacitor import response
-
-
-def do_authentication(self):
-    """Authentication."""
-    try:
-        json_data = request.get_json(silent=False)
-        user_id = json_data["client_id"]
-        user_secret = json_data["client_secret"]
-        users = self.get_cache("users", default=dict())
-        if user_id not in users.keys():
-            return response.forbidden()
-        if users[user_id]["secret"] != user_secret:
-            return response.forbidden()
-        args = (self._secret_key, "access_token", user_id)
-        access_token = create_signed_value(*args)
-        rv = dict(
-            access_token=access_token,)
-        return jsonify(rv)
-    except Exception:
-        pass
-    return response.forbidden()
 
 
 def authenticated(func):
@@ -34,7 +12,7 @@ def authenticated(func):
         # args[0] is self - current MethodView instance
         self = args[0]
         if not self.current_user:
-            return do_authentication(self)
+            return response.forbidden()
         return func(*args, **kwargs)
     return wrapper
 
