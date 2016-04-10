@@ -25,7 +25,7 @@ class CapacitorView(MethodView):
     def _current_access_token(self):
         access_token = None
         if "Access-Token" in request.headers:
-            access_token = request.headers["Access-Token"]
+            access_token = str(request.headers["Access-Token"])
         else:
             pass
         return access_token
@@ -136,6 +136,7 @@ class Mirrors(CapacitorView):
 
         return errors
 
+    @security.authenticated
     def post(self):
         json_data = request.get_json(silent=True)
         if not json_data:
