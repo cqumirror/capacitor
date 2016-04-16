@@ -5,45 +5,40 @@ import os
 from fabric.api import cd, run, put
 from fabric.contrib.files import exists
 
+PROJECT_NAME = "capacitor"
+REPO_URL = "https://github.com/cqumirrors/capacitor.git"
 # where to install the app
-app_root = "/srv/apps"
-git_root = "~/source-git"
+DST_HOST = "dev.mirrors.lanunion.org"
+APP_ROOT = "/srv/apps"
 
-project_name = "capacitor"
-app_name = project_name     # normally project name equals to app name
-app_cfg_src = "confs_production/"
-app_cfg_filename = "settings.cfg"
-app_src = os.path.join(git_root, project_name)
-app_dst = os.path.join(app_root, app_name)
+APP_NAME = PROJECT_NAME     # normally project name equals to app name
+APP_CFG = "confs_production/settings.cfg"
+APP_DST = os.path.join(APP_ROOT, APP_NAME)
 
-gunicorn_cfg_src = "confs_production/"
-gunicorn_cfg_filename = "gunicorn.py"
-gunicorn_log_path = "/var/log/gunicorn"
-gunicorn_pid_file = "gunicorn.pid"   # defined in gunicorn.py
+GUNICORN_CFG = "confs_production/gunicorn.py"
+GUNICORN_LOG_PATH = "/var/log/gunicorn"     # defined in gunicorn.py
+GUNICORN_PID_FILE = "gunicorn.pid"          # defined in gunicorn.py
 
 
-def update_web_pages():
-    """Update web pages, temp use only."""
-    web_pages_src = os.path.join(git_root, "index-of-mirrors")
-    web_pages_dst = "/www/mirrors/static"
-    with cd(web_pages_src):
-        run("git pull")
-        run("rm -rf /www/mirrors/static.bak")
-        run("mv /www/mirrors/static{,.bak}")     # backup firstly
-        run("cp -r . /www/mirrors/static")
+def git_clone_or_pull(repo_url):
+    root = "/tmp/source-git"
+    if not exists(root):
+        run("mkdir -p {}".format(root))
+    with cd(root):
+        if not exists(PROJECT_NAME):
+            run("git clone {}".format(repo_url))
+        with cd(PROJECT_NAME):
+            run("git pull")
+    app_src = os.path.join(root, PROJECT_NAME)
+    return app_src
 
 
-def git_pull():
-    with cd(app_src):
-        run("git pull")
-
-
-def prepare_env():
+def prepare_venv(app_src):
     requirements_txt = os.path.join(app_src, "requirements.txt")
     app_venv_name = "venv"
 
-    run("mkdir -p {}".format(app_dst))
-    with cd(app_dst):
+    run("mkdir -p {}".format(APP_DST))
+    with cd(APP_DST):
         if not exists(app_venv_name):
             run("virtualenv {}".format(app_venv_name))
         # upgrade pip
@@ -52,47 +47,61 @@ def prepare_env():
         run("cp {} .".format(requirements_txt))
         run("venv/bin/pip install --upgrade -r requirements.txt")
     # create log dir for gunicorn
-    run("mkdir -p {}".format(gunicorn_log_path))
+    run("mkdir -p {}".format(GUNICORN_LOG_PATH))
 
 
 def put_config_files():
-    app_settings_cfg = os.path.join(app_cfg_src, app_cfg_filename)
-    gunicorn_cfg = os.path.join(gunicorn_cfg_src, gunicorn_cfg_filename)
-    put(app_settings_cfg, app_dst)
-    put(gunicorn_cfg, app_dst)
+    put(APP_CFG, APP_DST)
+    put(GUNICORN_CFG, APP_DST)
 
 
 def deploy():
+    app_src = git_clone_or_pull(REPO_URL)
+    prepare_venv(app_src)
     # update configurations
     put_config_files()
     # update app
-    app_lib_old = os.path.join(app_dst, app_name)
-    app_lib_new = os.path.join(app_src, app_name)
+    app_lib_old = os.path.join(APP_DST, APP_NAME)
+    app_lib_new = os.path.join(app_src, APP_NAME)
     # remove old app lib
     run("rm -rf {}".format(app_lib_old))
     # copy new app lib to app dst
-    run("cp -r {} {}".format(app_lib_new, app_dst))
+    run("cp -r {} {}".format(app_lib_new, APP_DST))
 
 
 def start():
-    with cd(app_dst):
+    with cd(APP_DST):
         # kill old processes gracefully if app is running
-        if exists(gunicorn_pid_file):
-            run("kill -TERM $(<{})".format(gunicorn_pid_file))
+        if exists(GUNICORN_PID_FILE):
+            run("kill -TERM $(<{})".format(GUNICORN_PID_FILE))
         # start new gunicorn processes
-        app_settings_cfg = os.path.join(app_dst, app_cfg_filename)
+        settings_cfg = os.path.join(APP_DST, "settings.cfg")
         cmd_export_settings = "export {}_SETTINGS={}".format(
-            app_name.upper(),
-            app_settings_cfg)
-        gunicorn_cfg = os.path.join(app_dst, gunicorn_cfg_filename)
+            APP_NAME.upper(),
+            settings_cfg)
+        gunicorn_cfg = os.path.join(APP_DST, "gunicorn.py")
         cmd_run_app = "venv/bin/gunicorn -c {} " \
-                      "{}:app -D".format(gunicorn_cfg, app_name)
+                      "{}:app -D".format(gunicorn_cfg, APP_NAME)
         run("{} && {}".format(cmd_export_settings, cmd_run_app))
 
 
+def update_web_pages():
+    """Update web pages, temp use only."""
+    repo_url = "https://github.com/cqumirrors/index-of-mirrors.git"
+    web_pages_src = "/tmp/source-git/index-of-mirrors"
+    if not exists(web_pages_src):
+        with cd("/tmp/source-git"):
+            run("git clone {}".format(repo_url))
+    with cd(web_pages_src):
+        run("git pull")
+    web_pages_dst = "/www/mirrors/static"
+    with cd(web_pages_src):
+        run("rm -rf {}.bak".format(web_pages_dst))
+        run("mv /www/mirrors/static{,.bak}")     # backup firstly
+        run("cp -r . {}".format(web_pages_dst))
+
+
 def all():
-    git_pull()
-    prepare_env()
     deploy()
     start()
     update_web_pages()
