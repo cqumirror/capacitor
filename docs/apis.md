@@ -10,21 +10,21 @@
 3. 时间格式为ISO 8601(YYYY-MM-DDTHH:MM:SSz): e.g. 2008-01-14T04:33:35Z
 4. status code作为返回值(给程序用的),并附上返回信息(给人看的)
 
-```json
-{
-    "status": "Bad Request",
-    "message": "Problems parsing JSON"
-}
-```
+ ```json
+ {
+     "status": "Bad Request",
+     "message": "Problems parsing JSON"
+ }
+ ```
 
 5. JSON数组会封装在一个JSON对象里
 
-```json
-{
-    "count": 10,
-    "targets": []
-}
-```
+ ```json
+ {
+     "count": 10,
+     "targets": []
+ }
+ ```
 
 
 ##获取镜像列表
@@ -58,11 +58,11 @@ GET    /api/mirrors
 
 |参数|意义|备注|
 |----|----|----|
-|cname|权威名称(全局ID)|应仅包含[a-z]和-|
-|full_name|显示名字|参见镜像官方|
+|cname|全局ID|应仅包含[a-z]和-|
+|full_name|官方名称|参见镜像官方声明|
 |url|镜像链接||
 |help_url|镜像使用帮助链接|现链接到相应wiki页|
-|comment|镜像备注||
+|comment|备注||
 |synced_at|最后同步时间||
 |size|镜像大小||
 |sync_status|镜像更新状态|具体代码含义参加下表|
