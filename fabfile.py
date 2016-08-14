@@ -6,9 +6,10 @@ from fabric.api import cd, run, put
 from fabric.contrib.files import exists
 
 PROJECT_NAME = "capacitor"
-REPO_URL = "https://github.com/cqumirrors/capacitor.git"
+REPO_URL = "https://github.com/cqumirror/capacitor.git"
 # where to install the app
-DST_HOST = "dev.mirrors.lanunion.org"
+# DST_HOST = "dev.mirrors.lanunion.org"
+DST_HOST = "mirrors.cqu.edu.cn"
 APP_ROOT = "/srv/apps"
 
 APP_NAME = PROJECT_NAME     # normally project name equals to app name
@@ -87,14 +88,16 @@ def start():
 
 def update_web_pages():
     """Update web pages, temp use only."""
-    repo_url = "https://github.com/cqumirrors/index-of-mirrors.git"
+    repo_url = "https://github.com/cqumirror/index-of-mirrors.git"
     web_pages_src = "/tmp/source-git/index-of-mirrors"
+    web_pages_dst = "/www/mirrors/static"
     if not exists(web_pages_src):
         with cd("/tmp/source-git"):
             run("git clone {}".format(repo_url))
     with cd(web_pages_src):
         run("git pull")
-    web_pages_dst = "/www/mirrors/static"
+    if not exists(web_pages_dst):
+        run("mkdir -p {}".format(web_pages_dst))
     with cd(web_pages_src):
         run("rm -rf {}.bak".format(web_pages_dst))
         run("mv /www/mirrors/static{,.bak}")     # backup firstly

@@ -30,5 +30,4 @@ def log_file_handler(app_name, log_level, log_dir):
         fmt="%(asctime)s %(levelname)s: %(message)s [in %(pathname)s:%(lineno)d]",
         datefmt="%Y-%m-%d %H:%M:%S")
     file_handler.setFormatter(formatter)
-
     return file_handler

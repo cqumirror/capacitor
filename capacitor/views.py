@@ -12,7 +12,8 @@ from capacitor import security
 class CapacitorView(MethodView):
 
     pool = redis.ConnectionPool(host=app.config["REDIS_HOST"],
-                                port=6379, db=0)
+                                port=app.config["REDIS_PORT"],
+                                db=app.config["REDIS_DB"])
 
     @property
     def _secret_key(self):
@@ -66,7 +67,7 @@ class CapacitorView(MethodView):
         """
         if hasattr(g, "cache"):
             return g.cache
-        g.cache = redis.StrictRedis(connection_pool=self.pool)
+        g.cache = redis.StrictRedis(connection_pool=CapacitorView.pool)
         return g.cache
 
     def cache_get(self, k, default=None):
