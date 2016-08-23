@@ -4,79 +4,48 @@ from flask.views import MethodView
 import redis
 import json
 
-from capacitor import app
 from capacitor import response
 from capacitor import security
+from capacitor import settings_get
 
 
 class CapacitorView(MethodView):
 
-    pool = redis.ConnectionPool(host=app.config["REDIS_HOST"],
-                                port=app.config["REDIS_PORT"],
-                                db=app.config["REDIS_DB"])
+    pool = redis.ConnectionPool(host=settings_get("REDIS_HOST"),
+                                port=settings_get("REDIS_PORT"),
+                                db=settings_get("REDIS_DB"))
 
-    @property
-    def _secret_key(self):
-        secret = self.settings_get("secret_key")
-        if not secret:
-            raise Exception("'secret_key' needed")
-        return self.settings_get("secret_key")
-
-    @property
-    def _current_access_token(self):
-        access_token = None
-        if "Access-Token" in request.headers:
-            access_token = str(request.headers["Access-Token"])
-        else:
-            pass
-        return access_token
-
-    def get_current_user(self):
-        current_access_token = self._current_access_token
-        if not current_access_token:
-            return None
-        # expiration: 365 days
-        args = (self._secret_key, "access_token",
-                current_access_token, 365)
-        current_user = security.decode_signed_value(*args)
-        users_cached = self.cache_get("users")
-        if current_user not in users_cached.keys():
-            return None
-        else:
-            return current_user
+    def settings_get(self, name, default=None):
+        return settings_get(name, default)
 
     @property
     def current_user(self):
         if not hasattr(g, 'current_user'):
-            g.current_user = self.get_current_user()
+            g.current_user = security.test_current_user()
         return g.current_user
 
-    def settings_get(self, name, default=None):
-        name_upper = name.upper()
-        rv = app.config[name_upper] if name_upper in app.config else default
-        return rv
-
     @property
-    def cache(self):
+    def _redis(self):
         """
-        cache = {
+        redis.db = {
             "mirrors": {},
             "notices": {},
             "users": {}
         }
         """
-        if hasattr(g, "cache"):
-            return g.cache
-        g.cache = redis.StrictRedis(connection_pool=CapacitorView.pool)
-        return g.cache
+        if hasattr(g, "redis"):
+            return g.redis
+        g.redis = redis.StrictRedis(connection_pool=CapacitorView.pool)
+        return g.redis
 
     def cache_get(self, k, default=None):
-        rv = json.loads(self.cache.get(k))
-        return rv if rv else default
+        v = self._redis.get(k)
+        ret = json.loads(v) if v else default
+        return ret
 
     def cache_set(self, k, v):
-        value = json.dumps(v)
-        return self.cache.set(k, value)
+        v = json.dumps(v)
+        return self._redis.set(k, v)
 
 
 class Mirrors(CapacitorView):
@@ -256,10 +225,10 @@ class Notices(CapacitorView):
 
 
 def register_api(view, endpoint, url, pk="cname", pk_type="string"):
+    from capacitor import app
     view_func = view.as_view(endpoint)
     # e.g. GET,POST /api/mirrors
-    app.add_url_rule(url, defaults={pk: None},
-                     view_func=view_func, methods=['GET'])
+    app.add_url_rule(url, defaults={pk: None}, view_func=view_func, methods=['GET'])
     app.add_url_rule(url, view_func=view_func, methods=['POST'])
     # e.g. GET,PUT,DELETE /api/mirrors/<cname:string>
     app.add_url_rule("{}/<{}:{}>".format(url, pk_type, pk),

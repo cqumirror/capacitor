@@ -17,7 +17,7 @@ def _mkdir_p(path):
             raise
 
 
-def log_file_handler(app_name, log_level, log_dir):
+def log_file_handler(app_name, log_level, log_dir, log_fmt, date_fmt):
     app_log_dir = os.path.join(log_dir, app_name.lower())
     _mkdir_p(app_log_dir)
 
@@ -26,8 +26,6 @@ def log_file_handler(app_name, log_level, log_dir):
 
     file_handler = logging.FileHandler(log_path)
     file_handler.setLevel(logging.ERROR)
-    formatter = logging.Formatter(
-        fmt="%(asctime)s %(levelname)s: %(message)s [in %(pathname)s:%(lineno)d]",
-        datefmt="%Y-%m-%d %H:%M:%S")
+    formatter = logging.Formatter(fmt=log_fmt, datefmt=date_fmt)
     file_handler.setFormatter(formatter)
     return file_handler
