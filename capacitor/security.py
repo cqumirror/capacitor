@@ -5,6 +5,7 @@ import hashlib
 from functools import wraps
 from flask import request
 import redis
+import json
 
 from capacitor import app
 from capacitor import settings_get
@@ -43,11 +44,11 @@ def test_current_user():
     _secret_key = get_secret_key()
     if not _access_token or not _secret_key:
         return None
-    expiration = settings_get("access_token_expiration")
-    args = (_secret_key, "access_token", _access_token, expiration)
+    expiration = settings_get("signature_expiration")
+    args = (_secret_key, "user_session", _access_token, expiration)
     current_user = decode_signed_value(*args)
     _redis = get_redis()
-    users_cached = _redis.get("users")
+    users_cached = json.loads(_redis.get("users"))
     if not users_cached or current_user not in users_cached.keys():
         return None
     return current_user
