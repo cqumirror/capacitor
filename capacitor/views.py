@@ -1,4 +1,5 @@
 # -*- coding: utf-8 -*-
+
 from flask import request, g
 from flask.views import MethodView
 import redis
@@ -7,6 +8,17 @@ import json
 from capacitor import response
 from capacitor import security
 from capacitor import settings_get
+from capacitor import app
+
+
+@app.route("/api/mirror/index")
+def mirror_index():
+    pass
+
+
+@app.route("/api/server/flow")
+def server_flow():
+    pass
 
 
 class CapacitorView(MethodView):
@@ -235,5 +247,5 @@ def register_api(view, endpoint, url, pk="cname", pk_type="string"):
                      view_func=view_func, methods=['GET', 'PUT', 'DELETE'])
 
 
-register_api(Mirrors, "mirrors_api", "/api/mirrors", pk="cname")
-register_api(Notices, "notices_api", "/api/notices", pk="notice_id", pk_type="int")
+#register_api(Mirrors, "mirrors_api", "/api/mirrors", pk="cname")
+#register_api(Notices, "notices_api", "/api/notices", pk="notice_id", pk_type="int")

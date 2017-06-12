@@ -17,8 +17,8 @@ APP_CFG = "confs_production/settings.cfg"
 APP_DST = os.path.join(APP_ROOT, APP_NAME)
 
 GUNICORN_CFG = "confs_production/gunicorn.py"
-GUNICORN_LOG_PATH = "/var/log/gunicorn"     # defined in gunicorn.py
-GUNICORN_PID_FILE = "gunicorn.pid"          # defined in gunicorn.py
+GUNICORN_LOG_PATH = "/var/log/gunicorn/"     # defined in gunicorn.py
+GUNICORN_PID_FILE = "/var/run/gunicorn.pid"          # defined in gunicorn.py
 
 
 def git_clone_or_pull(repo_url):
@@ -46,7 +46,7 @@ def prepare_venv(app_src):
         run("venv/bin/pip install --upgrade pip")
         # update requirements.txt and upgrade venv
         run("cp {} .".format(requirements_txt))
-        run("venv/bin/pip install --upgrade -r requirements.txt --allow-external mysql-connector-python")
+        run("venv/bin/pip install --upgrade -r requirements.txt")
     # create log dir for gunicorn
     run("mkdir -p {}".format(GUNICORN_LOG_PATH))
 
